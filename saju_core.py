@@ -18,11 +18,15 @@ def get_hour_branch(hour, minute):
         if cur_min <= total_minutes < next_min:
             return cur_gz
 
-    return shifted_minutes[-1][0]
+    # fallback: 자시로 고정 + 로그 출력
+    print(f"[ERROR] 시간 {hour}:{minute} → 지지 매칭 실패. 분={total_minutes}")
+    return shifted_minutes[0][0]
 
-# 시지 천간 계산: 공식 기반
+# 시지 천간+지지 조합 계산
 def get_hour_gz(day_tg_index, hour, minute):
     branch = get_hour_branch(hour, minute)
+    if branch not in dz:
+        raise ValueError(f"[ERROR] 지지 값 오류: branch={branch}")
     dz_index = dz.index(branch)
     tg_index = (day_tg_index * 2 + dz_index) % 10
     return tg[tg_index] + branch
