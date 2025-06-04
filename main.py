@@ -11,12 +11,18 @@ def ping():
 def saju():
     try:
         data = request.json
+        print("🔍 요청 데이터:", data)
+
         birthdate = data["birthdate"]
         birthtime = data["birthtime"]
         gender = data["gender"]
+
         result = get_saju(birthdate, birthtime, gender)
+        print("✅ 결과:", result)
+
         return jsonify(result)
     except Exception as e:
-        return jsonify({"error": str(e)}), 400
+        print("❌ 예외 발생:", e)
+        return jsonify({"error": str(e)}), 500
 
 app = app
