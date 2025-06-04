@@ -4,10 +4,10 @@ import sxtwl
 tg = ["갑", "을", "병", "정", "무", "기", "경", "신", "임", "계"]
 dz = ["자", "축", "인", "묘", "진", "사", "오", "미", "신", "유", "술", "해"]
 
-# 시지 보정: 3칸 = 6시간 = 360분 앞당김
+# 시지 보정: 380분 (6시간 20분 = 3.17칸)
 def get_hour_branch(hour, minute):
     total_minutes = hour * 60 + minute
-    shifted_minutes = [(dz[i], ((1380 + i * 120 - 360) % 1440)) for i in range(12)]
+    shifted_minutes = [(dz[i], ((1380 + i * 120 - 380) % 1440)) for i in range(12)]
 
     if total_minutes < shifted_minutes[0][1]:
         total_minutes += 1440
@@ -20,14 +20,14 @@ def get_hour_branch(hour, minute):
 
     return shifted_minutes[-1][0]
 
-# 시지의 천간+지지 계산: 공식 기반 (정석)
+# 시지 천간 계산: 공식 기반
 def get_hour_gz(day_tg_index, hour, minute):
     branch = get_hour_branch(hour, minute)
     dz_index = dz.index(branch)
     tg_index = (day_tg_index * 2 + dz_index) % 10
     return tg[tg_index] + branch
 
-# 대운 방향: 일간 천간 음양 + 성별 기준
+# 대운 방향: 일간 음양 + 성별 기준
 def get_luck_direction(gender, day_tg_index):
     is_yang = day_tg_index % 2 == 0
     if gender == "남자":
