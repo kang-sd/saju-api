@@ -1,55 +1,70 @@
 
+import requests
+from datetime import datetime
 
-def calculate_hour_stem_branch(birthtime, day_gan):
-    # 시지 구간 정의 (정시 기준 2시간 단위)
-    hour_to_branch = {
-        (23, 0): '자', (1, 2): '축', (3, 4): '인', (5, 6): '묘',
-        (7, 8): '진', (9, 10): '사', (11, 12): '오', (13, 14): '미',
-        (15, 16): '신', (17, 18): '유', (19, 20): '술', (21, 22): '해'
+# 시지 시간표 (이미 보정된 기준)
+TIME_BRANCH_TABLE = [
+    ("23:30", "01:29", "자"),
+    ("01:30", "03:29", "축"),
+    ("03:30", "05:29", "인"),
+    ("05:30", "07:29", "묘"),
+    ("07:30", "09:29", "진"),
+    ("09:30", "11:29", "사"),
+    ("11:30", "13:29", "오"),
+    ("13:30", "15:29", "미"),
+    ("15:30", "17:29", "신"),
+    ("17:30", "19:29", "유"),
+    ("19:30", "21:29", "술"),
+    ("21:30", "23:29", "해"),
+]
+
+# 너가 준 시주 천간표
+HOUR_STEM_TABLE = {
+    "갑": ["갑", "을", "병", "정", "무", "기", "경", "신", "임", "계", "갑", "을"],
+    "을": ["병", "정", "무", "기", "경", "신", "임", "계", "갑", "을", "병", "정"],
+    "병": ["무", "기", "경", "신", "임", "계", "갑", "을", "병", "정", "무", "기"],
+    "정": ["경", "신", "임", "계", "갑", "을", "병", "정", "무", "기", "경", "신"],
+    "무": ["임", "계", "갑", "을", "병", "정", "무", "기", "경", "신", "임", "계"],
+    "기": ["갑", "을", "병", "정", "무", "기", "경", "신", "임", "계", "갑", "을"],
+    "경": ["병", "정", "무", "기", "경", "신", "임", "계", "갑", "을", "병", "정"],
+    "신": ["무", "기", "경", "신", "임", "계", "갑", "을", "병", "정", "무", "기"],
+    "임": ["경", "신", "임", "계", "갑", "을", "병", "정", "무", "기", "경", "신"],
+    "계": ["임", "계", "갑", "을", "병", "정", "무", "기", "경", "신", "임", "계"],
+}
+
+def get_saju_from_kasi_api(year: int, month: int, day: int, service_key: str):
+    url = f"http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getSolCalInfo?ServiceKey={service_key}&solYear={year}&solMonth={str(month).zfill(2)}&solDay={str(day).zfill(2)}&_type=json"
+    res = requests.get(url)
+    data = res.json()["response"]["body"]["items"]["item"]
+
+    return {
+        "lunar_date": f"{data['lunYear']}-{data['lunMonth'].zfill(2)}-{data['lunDay'].zfill(2)}",
+        "weekday": data["weekday"],
+        "ganji_year": data["sYear"],
+        "ganji_month": data["sMonth"],
+        "ganji_day": data["sDay"],
     }
 
-    # 천을귀인 시천간 매핑 (부분만 포함, 필요시 확장)
-    hour_gan_map = {
-        '갑': ['갑','을','병','정','무','기','경','신','임','계','갑','을'],
-        '을': ['병','정','무','기','경','신','임','계','갑','을','병','정'],
-        '병': ['무','기','경','신','임','계','갑','을','병','정','무','기'],
-        '정': ['경','신','임','계','갑','을','병','정','무','기','경','신'],
-        '무': ['임','계','갑','을','병','정','무','기','경','신','임','계'],
-        '기': ['갑','을','병','정','무','기','경','신','임','계','갑','을'],
-        '경': ['병','정','무','기','경','신','임','계','갑','을','병','정'],
-        '신': ['무','기','경','신','임','계','갑','을','병','정','무','기'],
-        '임': ['경','신','임','계','갑','을','병','정','무','기','경','신'],
-        '계': ['임','계','갑','을','병','정','무','기','경','신','임','계'],
-    }
+def calculate_hour_stem_branch(birthtime: str, day_stem: str):
+    hour = int(birthtime.split(":")[0])
+    minute = int(birthtime.split(":")[1])
+    total_min = hour * 60 + minute
 
-    try:
-        hour, minute = map(int, birthtime.strip().split(":"))
+    for i, (start, end, branch) in enumerate(TIME_BRANCH_TABLE):
+        sh, sm = map(int, start.split(":"))
+        eh, em = map(int, end.split(":"))
+        start_min = sh * 60 + sm
+        end_min = eh * 60 + em
 
-        # 30분 보정
-        minute -= 30
-        if minute < 0:
-            minute += 60
-            hour -= 1
-        if hour < 0:
-            hour = 23
-
-        # 시지 판단
-        for (start, end), branch in hour_to_branch.items():
-            if hour in (start, end):
-                hour_branch = branch
+        if start_min <= end_min:
+            if start_min <= total_min <= end_min:
+                time_branch = branch
                 break
         else:
-            return "시지오류", "시지오류"
+            if total_min >= start_min or total_min <= end_min:
+                time_branch = branch
+                break
 
-        # 시천간 계산
-        day_gan_clean = day_gan[0]
-        branch_order = ['자','축','인','묘','진','사','오','미','신','유','술','해']
-        if day_gan_clean in hour_gan_map:
-            idx = branch_order.index(hour_branch)
-            hour_gan = hour_gan_map[day_gan_clean][idx]
-        else:
-            hour_gan = "일간오류"
-
-        return hour_gan, hour_branch
-    except:
-        return "시간오류", "시간오류"
+    branch_index = ["자","축","인","묘","진","사","오","미","신","유","술","해"].index(time_branch)
+    time_stem = HOUR_STEM_TABLE[day_stem][branch_index]
+    return time_stem, time_branch
