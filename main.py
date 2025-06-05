@@ -3,6 +3,8 @@ import saju_core_kasi as saju_core
 
 app = Flask(__name__)
 
+SERVICE_KEY = "FwaCOA5XZ5lXe79WuR%2BRMCHT4BJ1M5XWYuRlsvv%2FlkGHAgw5dbATp%2FA6Kek5%2FarQcqD1%2FslrxehpzYcsGaNhTw%3D%3D"
+
 @app.route("/saju", methods=["POST"])
 def run():
     data = request.get_json()
@@ -10,12 +12,23 @@ def run():
     birthtime = data.get('birthtime', '')
     gender = data.get('gender', '')
     luck_direction = data.get('luck_direction', '')
-    service_key = "FwaCOA5XZ5lXe79WuR%2BRMCHT4BJ1M5XWYuRlsvv%2FlkGHAgw5dbATp%2FA6Kek5%2FarQcqD1%2FslrxehpzYcsGaNhTw%3D%3D"
-url = f"http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getSolCalInfo?ServiceKey={service_key}&solYear={year}&solMonth={str(month).zfill(2)}&solDay={str(day).zfill(2)}&_type=json"
 
-    year, month, day = map(int, birthdate.split('-'))
-    result = saju_core.get_saju_from_kasi_api(year, month, day, service_key)
-    hour_gan, hour_branch = saju_core.calculate_hour_stem_branch(birthtime, result['ganji_day'][0])
+    if not birthdate:
+        return jsonify({'error': 'birthdate is required'}), 400
+
+    try:
+        year, month, day = map(int, birthdate.split('-'))
+    except Exception:
+        return jsonify({'error': 'Invalid birthdate format'}), 400
+
+    try:
+        result = saju_core.get_saju_from_kasi_api(year, month, day, SERVICE_KEY)
+    except Exception as e:
+        return jsonify({'error': f'API 호출 실패: {str(e)}'}), 500
+
+    # 일간 첫 글자만 추출 (예: '계해' -> '계')
+    day_stem = result['ganji_day'][0]
+    hour_gan, hour_branch = saju_core.calculate_hour_stem_branch(birthtime, day_stem)
     result['ganji_hour'] = f"{hour_gan}{hour_branch}"
 
     return jsonify({
