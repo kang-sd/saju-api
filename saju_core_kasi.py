@@ -1,8 +1,6 @@
-
 import requests
-from datetime import datetime
 
-# 시지 시간표 (이미 보정된 기준)
+# 시지 시간표 (이미 보정된 시간 기준)
 TIME_BRANCH_TABLE = [
     ("23:30", "01:29", "자"),
     ("01:30", "03:29", "축"),
@@ -18,7 +16,7 @@ TIME_BRANCH_TABLE = [
     ("21:30", "23:29", "해"),
 ]
 
-# 너가 준 시주 천간표
+# 천간 시주표 (네가 준 최신 표)
 HOUR_STEM_TABLE = {
     "갑": ["갑", "을", "병", "정", "무", "기", "경", "신", "임", "계", "갑", "을"],
     "을": ["병", "정", "무", "기", "경", "신", "임", "계", "갑", "을", "병", "정"],
@@ -35,7 +33,15 @@ HOUR_STEM_TABLE = {
 def get_saju_from_kasi_api(year: int, month: int, day: int, service_key: str):
     url = f"http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getSolCalInfo?ServiceKey={service_key}&solYear={year}&solMonth={str(month).zfill(2)}&solDay={str(day).zfill(2)}&_type=json"
     res = requests.get(url)
-    data = res.json()["response"]["body"]["items"]["item"]
+    print(f"API 요청 URL: {url}")
+    print(f"응답 상태 코드: {res.status_code}")
+    print(f"응답 내용(최대 500자): {res.text[:500]}")
+    if res.status_code != 200:
+        raise Exception(f"API 요청 실패: 상태코드 {res.status_code}")
+    try:
+        data = res.json()["response"]["body"]["items"]["item"]
+    except Exception as e:
+        raise Exception(f"API 응답 JSON 파싱 실패: {e}")
 
     return {
         "lunar_date": f"{data['lunYear']}-{data['lunMonth'].zfill(2)}-{data['lunDay'].zfill(2)}",
@@ -64,6 +70,8 @@ def calculate_hour_stem_branch(birthtime: str, day_stem: str):
             if total_min >= start_min or total_min <= end_min:
                 time_branch = branch
                 break
+    else:
+        raise Exception("해당 시간에 맞는 시지 없음")
 
     branch_index = ["자","축","인","묘","진","사","오","미","신","유","술","해"].index(time_branch)
     time_stem = HOUR_STEM_TABLE[day_stem][branch_index]
