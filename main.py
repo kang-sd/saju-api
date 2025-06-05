@@ -3,7 +3,7 @@ import saju_core_kasi as saju_core
 
 app = Flask(__name__)
 
-SERVICE_KEY = "FwaCOA5XZ5lXe79WuR%2BRMCHT4BJ1M5XWYuRlsvv%2FlkGHAgw5dbATp%2FA6Kek5%2FarQcqD1%2FslrxehpzYcsGaNhTw%3D%3D"
+SERVICE_KEY = "jyD7ufDh6n1ZbE%2BzzZ2mgo%2F5Ef1%2B8r2xEdGqFAkULVnMUMjfkT%2FzMQZIhB8x5mSDp3jK0xaw7ZxQlz0p%2BHLgDg%3D%3D"
 
 @app.route("/saju", methods=["POST"])
 def run():
@@ -26,7 +26,6 @@ def run():
     except Exception as e:
         return jsonify({'error': f'API 호출 실패: {str(e)}'}), 500
 
-    # 일간 첫 글자만 추출 (예: '계해' -> '계')
     day_stem = result['ganji_day'][0]
     hour_gan, hour_branch = saju_core.calculate_hour_stem_branch(birthtime, day_stem)
     result['ganji_hour'] = f"{hour_gan}{hour_branch}"
