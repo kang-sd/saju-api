@@ -1,28 +1,36 @@
 from flask import Flask, request, jsonify
-from saju_core import get_saju
+import saju_core_kasi as saju_core
 
 app = Flask(__name__)
 
-@app.route('/ping', methods=['GET'])
-def ping():
-    return "pong"
+@app.route("/saju", methods=["POST"])
+def run():
+    data = request.get_json()
+    birthdate = data.get('birthdate')
+    birthtime = data.get('birthtime', '')
+    gender = data.get('gender', '')
+    luck_direction = data.get('luck_direction', '')
+    service_key = "FwaCOA5XZ5lXe79WuR%2BRMCHT4BJ1M5XWYuRlsvv%2FlkGHAgw5dbATp%2FA6Kek5%2FarQcqD1%2FslrxehpzYcsGaNhTw%3D%3D"
 
-@app.route('/saju', methods=['POST'])
-def saju():
-    try:
-        data = request.json
-        print("🔍 요청 데이터:", data)
+    year, month, day = map(int, birthdate.split('-'))
+    result = saju_core.get_saju_from_kasi_api(year, month, day, service_key)
+    hour_gan, hour_branch = saju_core.calculate_hour_stem_branch(birthtime, result['ganji_day'])
+    result['ganji_hour'] = f"{hour_gan}{hour_branch}"
 
-        birthdate = data["birthdate"]
-        birthtime = data["birthtime"]
-        gender = data["gender"]
+    return jsonify({
+        'birthdate': birthdate,
+        'lunar_date': result['lunar_date'],
+        'weekday': result['weekday'],
+        'ganji': {
+            'year': result['ganji_year'],
+            'month': result['ganji_month'],
+            'day': result['ganji_day'],
+            'hour': result['ganji_hour']
+        },
+        'birthtime': birthtime,
+        'gender': gender,
+        'luck_direction': luck_direction
+    })
 
-        result = get_saju(birthdate, birthtime, gender)
-        print("✅ 결과:", result)
-
-        return jsonify(result)
-    except Exception as e:
-        print("❌ 예외 발생:", e)
-        return jsonify({"error": str(e)}), 500
-
-app = app
+if __name__ == "__main__":
+    app.run(debug=True)

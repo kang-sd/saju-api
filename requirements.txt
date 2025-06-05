@@ -1,3 +1,2 @@
 flask
-sxtwl
-gunicorn
+requests
