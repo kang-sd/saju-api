@@ -11,6 +11,7 @@ def run():
     gender = data.get('gender', '')
     luck_direction = data.get('luck_direction', '')
     service_key = "FwaCOA5XZ5lXe79WuR%2BRMCHT4BJ1M5XWYuRlsvv%2FlkGHAgw5dbATp%2FA6Kek5%2FarQcqD1%2FslrxehpzYcsGaNhTw%3D%3D"
+url = f"http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getSolCalInfo?ServiceKey={service_key}&solYear={year}&solMonth={str(month).zfill(2)}&solDay={str(day).zfill(2)}&_type=json"
 
     year, month, day = map(int, birthdate.split('-'))
     result = saju_core.get_saju_from_kasi_api(year, month, day, service_key)
