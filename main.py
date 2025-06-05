@@ -14,7 +14,7 @@ def run():
 
     year, month, day = map(int, birthdate.split('-'))
     result = saju_core.get_saju_from_kasi_api(year, month, day, service_key)
-    hour_gan, hour_branch = saju_core.calculate_hour_stem_branch(birthtime, result['ganji_day'])
+    hour_gan, hour_branch = saju_core.calculate_hour_stem_branch(birthtime, result['ganji_day'][0])
     result['ganji_hour'] = f"{hour_gan}{hour_branch}"
 
     return jsonify({
