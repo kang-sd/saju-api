@@ -11,7 +11,7 @@ def run():
         birthtime = data.get('birthtime', '')
         gender = data.get('gender', '')
         luck_direction = data.get('luck_direction', '')
-        service_key = "여기에_인증키_넣기"
+        service_key = "jyD7ufDh6n1ZbE%2BzzZ2mgo%2F5Ef1%2B8r2xEdGqFAkULVnMUMjfkT%2FzMQZIhB8x5mSDp3jK0xaw7ZxQlz0p%2BHLgDg%3D%3D"
 
         year, month, day = map(int, birthdate.split('-'))
         result = saju_core.get_saju_from_kasi_api(year, month, day, service_key)
