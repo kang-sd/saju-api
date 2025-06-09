@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 import saju_core_kasi as saju_core
+import traceback
 
 app = Flask(__name__)
 
@@ -14,8 +15,13 @@ def run():
         service_key = "jyD7ufDh6n1ZbE%2BzzZ2mgo%2F5Ef1%2B8r2xEdGqFAkULVnMUMjfkT%2FzMQZIhB8x5mSDp3jK0xaw7ZxQlz0p%2BHLgDg%3D%3D"
 
         year, month, day = map(int, birthdate.split('-'))
+
         result = saju_core.get_saju_from_kasi_api(year, month, day, service_key)
-        hour_gan, hour_branch = saju_core.calculate_hour_stem_branch(birthtime, result['ganji_day'])
+        ganji_day = result.get('ganji_day', '')
+        if not ganji_day:
+            raise ValueError("ganji_day 값이 비어있음")
+
+        hour_gan, hour_branch = saju_core.calculate_hour_stem_branch(birthtime, ganji_day[0])
         result['ganji_hour'] = f"{hour_gan}{hour_branch}"
 
         return jsonify({
@@ -33,6 +39,8 @@ def run():
             'luck_direction': luck_direction
         })
     except Exception as e:
+        print("🔥 예외 발생:")
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
