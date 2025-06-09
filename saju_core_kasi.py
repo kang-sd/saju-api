@@ -1,5 +1,22 @@
 import requests
 import urllib.parse
+from datetime import datetime, timedelta
+
+# 천간 지지 시주 표
+TIME_HEAVENLY_STEM_TABLE = {
+    '갑': ['갑', '을', '병', '정', '무', '기', '경', '신', '임', '계', '갑', '을'],
+    '을': ['병', '정', '무', '기', '경', '신', '임', '계', '갑', '을', '병', '정'],
+    '병': ['무', '기', '경', '신', '임', '계', '갑', '을', '병', '정', '무', '기'],
+    '정': ['경', '신', '임', '계', '갑', '을', '병', '정', '무', '기', '경', '신'],
+    '무': ['임', '계', '갑', '을', '병', '정', '무', '기', '경', '신', '임', '계'],
+    '기': ['갑', '을', '병', '정', '무', '기', '경', '신', '임', '계', '갑', '을'],
+    '경': ['병', '정', '무', '기', '경', '신', '임', '계', '갑', '을', '병', '정'],
+    '신': ['무', '기', '경', '신', '임', '계', '갑', '을', '병', '정', '무', '기'],
+    '임': ['경', '신', '임', '계', '갑', '을', '병', '정', '무', '기', '경', '신'],
+    '계': ['임', '계', '갑', '을', '병', '정', '무', '기', '경', '신', '임', '계'],
+}
+
+TIME_EARTHLY_BRANCHES = ['자', '축', '인', '묘', '진', '사', '오', '미', '신', '유', '술', '해']
 
 def get_saju_from_kasi_api(year, month, day, service_key):
     base_url = "https://apis.data.go.kr/B090041/openapi/service/LrsrCldInfoService/getLrsrCldInfo"
@@ -18,38 +35,33 @@ def get_saju_from_kasi_api(year, month, day, service_key):
 
     data = response.json()
 
-    # 실제 API JSON 구조에 맞게 값 추출 코드 작성 필요
-    # 예시는 임시로 빈 값 할당
     result = {
-        'lunar_date': '',  
+        'lunar_date': '',
         'weekday': '',
         'ganji_year': '',
         'ganji_month': '',
         'ganji_day': ''
     }
 
-    # data 에서 실제 값 파싱 예
     try:
         body = data['response']['body']
         items = body['items']['item']
-        # items가 리스트인지 단일 dict인지 체크 후 처리
-        if isinstance(items, list):
-            item = items[0]
-        else:
-            item = items
+        item = items[0] if isinstance(items, list) else items
         result['lunar_date'] = item.get('lunDay', '')
         result['weekday'] = item.get('weekday', '')
-        result['ganji_year'] = item.get('lunYear', '')
-        result['ganji_month'] = item.get('lunMonth', '')
-        result['ganji_day'] = item.get('lunDay', '')
+        result['ganji_year'] = item.get('ganjiYear', '')
+        result['ganji_month'] = item.get('ganjiMonth', '')
+        result['ganji_day'] = item.get('ganjiDay', '')
     except Exception:
-        pass
+        raise ValueError("API 응답 파싱 실패")
 
     return result
 
-def calculate_hour_stem_branch(birthtime, ganji_day):
-    # 표준화된 표로 시간 천간/지지 계산 로직 작성
-    # 예시 임시 반환
-    hour_gan = '갑'
-    hour_branch = '자'
-    return hour_gan, hour_branch
+def calculate_hour_stem_branch(birthtime: str, day_stem: str):
+    birth_time = datetime.strptime(birthtime, '%H:%M')
+    corrected_time = birth_time - timedelta(minutes=30)
+    total_minutes = corrected_time.hour * 60 + corrected_time.minute
+    index = (total_minutes // 120) % 12
+    hour_branch = TIME_EARTHLY_BRANCHES[index]
+    hour_stem = TIME_HEAVENLY_STEM_TABLE[day_stem][index]
+    return hour_stem, hour_branch
